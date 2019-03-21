@@ -13,6 +13,9 @@ const app = express();
 const url = 'mongodb://mongo:27017/WhatsappClone';
 console.log("Mongo URL: " + url)
 mongoose.connect(url, { useNewUrlParser: true }); 
+console.log("*****************************Mongo Connection: *************************** ");
+console.log(mongoose.connection.readyState);
+console.log("*****************************Mongo Connection: *************************** ");
 
 // body parser config
 app.use(bodyParser.json({limit: '50mb'}));
