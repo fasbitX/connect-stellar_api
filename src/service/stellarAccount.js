@@ -12,7 +12,7 @@ StellarSdk.Network.useTestNetwork();
 
 
 export const createAccount = async () => {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const keypair = StellarSdk.Keypair.random();
 
         const secret = AES.encrypt(
@@ -36,26 +36,29 @@ export const createAccountInLedger = async (newAccount) => {
     return new Promise(async (resolve, reject) => {
         try {
             const admin = await getAdmin();
+            console.log("New account");
+            console.log(newAccount);
+            console.log("Admin Seed ", admin.stellarSeed);
 
-            const provisionerKeyPair = StellarSdk.Keypair.fromSecret(AES.decrypt(admin.stellarSeed, ENVCryptoSecret).toString(enc.Utf8))
-            const provisioner = await stellarServer.loadAccount(provisionerKeyPair.publicKey())
-        
+            const provisionerKeyPair = StellarSdk.Keypair.fromSecret(AES.decrypt(admin.stellarSeed, ENVCryptoSecret).toString(enc.Utf8));
+            const provisioner = await stellarServer.loadAccount(provisionerKeyPair.publicKey());
+
             console.log('creating account in ledger', newAccount)
-        
+
             const transaction = new StellarSdk.TransactionBuilder(provisioner)
                 .addOperation(
                     StellarSdk.Operation.createAccount({
-                    destination: newAccount,
-                    startingBalance: '1'
-                })
+                        destination: newAccount,
+                        startingBalance: '1'
+                    })
                 ).build()
-      
+
             transaction.sign(provisionerKeyPair)
-        
+
             const result = await stellarServer.submitTransaction(transaction);
             console.log('Account created: ', result)
             resolve(result);
-            } catch (e) {
+        } catch (e) {
             console.log('Stellar account not created.', e)
         }
     })
@@ -63,34 +66,35 @@ export const createAccountInLedger = async (newAccount) => {
 
 
 export const payment = async (signerKeys, destination, amount) => {
-  
+
     const account = await stellarServer.loadAccount(signerKeys.publicKey())
-  
+
     let transaction = new StellarSdk.TransactionBuilder(account)
-      .addOperation(
-        StellarSdk.Operation.payment({
-          destination,
-          asset: StellarSdk.Asset.native(),
-          amount: amount
-        })
-      )
-      .build()
-  
+        .addOperation(
+            StellarSdk.Operation.payment({
+                destination,
+                asset: StellarSdk.Asset.native(),
+                amount: amount
+            })
+        )
+        .build()
+
     transaction.sign(signerKeys)
-  
+
     console.log(`sending ${amount} from ${signerKeys.publicKey()} to ${destination} `)
     try {
-      const result = await stellarServer.submitTransaction(transaction)
-      console.log(`sent ${result}`)
-      return result
+        const result = await stellarServer.submitTransaction(transaction)
+        console.log(`sent ${result}`)
+        return result
     } catch (e) {
-      console.log(`failure ${e}`)
-      throw e
+        console.log(`failure ${e}`)
+        throw e
     }
-  }
+}
 
 export const getAccount = (id) => {
     console.log('called');
+    console.log(id);
     return stellarServer.accounts()
         .accountId(id)
         .call()
