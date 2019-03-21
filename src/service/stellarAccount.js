@@ -38,9 +38,11 @@ export const createAccountInLedger = async (newAccount) => {
             const admin = await getAdmin();
             console.log("New account");
             console.log(newAccount);
-            console.log("Admin Seed ", admin.stellarSeed);
+            //console.log("Admin Seed ", admin.stellarSeed);
 
-            const provisionerKeyPair = StellarSdk.Keypair.fromSecret(AES.decrypt(admin.stellarSeed, ENVCryptoSecret).toString(enc.Utf8));
+            //const provisionerKeyPair = StellarSdk.Keypair.fromSecret(AES.decrypt(admin.stellarSeed, ENVCryptoSecret).toString(enc.Utf8));
+            //GAYQ365SB2TCHRWV5JOC5JYNCEHGOBIEK3TAJ467GYORWZHBD52SUPN6
+            const provisionerKeyPair = StellarSdk.Keypair.fromSecret("SDGMVJKSM45RTZIQYRBGYM2QH7NN7TNAEWD3G56DQ3N2YIXI5NE3I2DB");
             const provisioner = await stellarServer.loadAccount(provisionerKeyPair.publicKey());
 
             console.log('creating account in ledger', newAccount)
