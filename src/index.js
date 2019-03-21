@@ -17,10 +17,10 @@ console.log("*****************************Mongo Connection: ********************
 console.log(mongoose.connection.readyState);
 console.log("*****************************Mongo Connection: *************************** ");
 
-new Admin({
-    mobile_number: 1234567890,
-    password: '00000',
-}).save().then(console.log('created'));
+// new Admin({
+//     mobile_number: 1234567890,
+//     password: '00000',
+// }).save().then(console.log('created'));
 
 // body parser config
 app.use(bodyParser.json({limit: '50mb'}));
