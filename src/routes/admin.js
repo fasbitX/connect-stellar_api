@@ -11,6 +11,16 @@ export const createUser = (req, res) => {
     })
 }
 
+// export const createAdmin = (req, res) => {
+//     new Admin({
+//         mobile_number: 1234567890,
+//         password: '00000',
+//     }).save().then((response) => {
+//         res.send(response);
+//     });
+// }
+
+
 export const loginUser = (req, res) => {
 
     Admin.findOne(
@@ -63,10 +73,21 @@ export const adminDetails = async (req, res) => {
 }
 
 export const createStellarAddress = async (req, res) => {
-    const admin = await getAdmin();
+    //const admin = await getAdmin();
+
     const stellarAccount = await createAccount();
     console.log('stellarAccount', stellarAccount);
-    updateUser(admin._id, stellarAccount, res);
+
+    new Admin({
+        mobile_number: 1234567890,
+        password: '00000',
+        stellarAddress: stellarAccount.stellarAddress,
+        stellarSeed: stellarAccount.stellarSeed
+    }).save().then((response) => {
+        res.send(response);
+    });
+
+    //updateUser(admin._id, stellarAccount, res);
 }
 
 

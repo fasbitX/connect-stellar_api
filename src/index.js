@@ -5,22 +5,20 @@ import { User } from './models/UserSchema';
 import cloudinary from 'cloudinary';
 import { Admin } from './models/AdminSchema'; 
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
+require('dotenv').config();
 
 
 const app = express();
 
 //db connection
-const url = 'mongodb://mongo:27017/WhatsappClone';
+const url = 'mongodb://localhost:27017/WhatsappClone';
 console.log("Mongo URL: " + url)
 mongoose.connect(url, { useNewUrlParser: true }); 
 console.log("*****************************Mongo Connection: *************************** ");
 console.log(mongoose.connection.readyState);
 console.log("*****************************Mongo Connection: *************************** ");
 
-// new Admin({
-//     mobile_number: 1234567890,
-//     password: '00000',
-// }).save().then(console.log('created'));
+
 
 // body parser config
 app.use(bodyParser.json({limit: '50mb'}));
@@ -48,9 +46,9 @@ app.use(function (req, res, next) {
 
 // cloudinary config
 cloudinary.config({ 
-    cloud_name: 'draalvptx', 
-    api_key: '388483629878342', 
-    api_secret: 'pAPT2KDGkyNcyBKT9NuqzjkM5VA' 
+    cloud_name: process.env.CD_CLOUD_NAME, 
+    api_key: process.env.CD_API_KEY, 
+    api_secret: process.env.CD_API_SECRET 
 });  
 
 // routes
@@ -93,19 +91,21 @@ app.get('/admin/fiat', require('./routes/transaction').fiatBalance)
 app.get('/admin/stellar', require('./routes/transaction').stellarBalance)
 app.get('/admin/address', require('./routes/admin').createStellarAddress)
 
-if(process.argv[2] && process.argv[2] == 'seed'){
-    console.log('seed', process.argv[3])
-    switch (process.argv[3] || null) {
-        case 'user':
-            new Admin({
-                mobile_number: 1234567890,
-                password: '00000',
-            }).save().then(console.log('created'));
-        break;
-        default: 
-            console.log('No collection');
-            break;
-    }
-}
+//app.get('/admin/createadmin', require('./routes/admin').createAdmin)
+
+// if(process.argv[2] && process.argv[2] == 'seed'){
+//     console.log('seed', process.argv[3])
+//     switch (process.argv[3] || null) {
+//         case 'user':
+//             new Admin({
+//                 mobile_number: 1234567890,
+//                 password: '00000',
+//             }).save().then(console.log('created'));
+//         break;
+//         default: 
+//             console.log('No collection');
+//             break;
+//     }
+// }
 
 app.listen(4000, () => console.log('Example app listening on port 4000!'))

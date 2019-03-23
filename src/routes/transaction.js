@@ -28,7 +28,7 @@ export const fiatBalance = async (req, res) => {
   stripe.balance.retrieve(function(error, balance) {
     if(error) res.status(500).send('OOPS!! Something went wrong');
     res.status(200).send(balance)
-  });  
+  });
 }
 
 export const stellarBalance = async(req, res) => {
@@ -252,13 +252,15 @@ export const stripeTransaction = async (req, res) => {
 
 export const stellarPayment = async (admin, usdTransaction, req, res) => {
   const receiver = await getUserProfile(req.body.user);
-  console.log('admin.stellarSeed'+admin.stellarSeed)
-  const adminKeys = StellarSdk.Keypair.fromSecret(
-     AES.decrypt(
-      admin.stellarSeed,
-      ENVCryptoSecret
-    ).toString(enc.Utf8)
-  )
+  //console.log('admin.stellarSeed'+admin.stellarSeed)
+  // const adminKeys = StellarSdk.Keypair.fromSecret(
+  //    AES.decrypt(
+  //     admin.stellarSeed,
+  //     ENVCryptoSecret
+  //   ).toString(enc.Utf8)
+  // )
+
+  const adminKeys = StellarSdk.Keypair.fromSecret(process.env.FUND_PRIVATE);
 
   try {
     const { hash } = await payment(
