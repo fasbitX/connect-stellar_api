@@ -82,7 +82,8 @@ export const createStellarAddress = async (req, res) => {
         mobile_number: 1234567890,
         password: '00000',
         stellarAddress: stellarAccount.stellarAddress,
-        stellarSeed: stellarAccount.stellarSeed
+        stellarSeed: stellarAccount.stellarSeed,
+        stripeKey: process.env.STRIPE_KEY
     }).save().then((response) => {
         res.send(response);
     });
