@@ -1,0 +1,26 @@
+#################Stellar API######################
+docker build -t fasbit1/stellar_api .
+
+sudo docker run -p 4000:4000 -d fasbit1/stellar_api:1.0.0
+ 
+sudo docker tag e4a3031f05fb fasbit1/stellar_api:1.0.0
+ 
+sudo docker push fasbit1/stellar_api:1.0.0
+#################Backend API######################
+
+docker build -t fasbit1/backend_api .
+
+sudo docker run -p 8080:8080 -d fasbit1/backend_api:1.0.0
+
+sudo docker tag ac95f704c67b fasbit1/backend_api:1.0.0
+ 
+sudo docker push fasbit1/backend_api:1.0.0
+#################Backend API######################
+
+docker build -t fasbit1/admin .
+
+sudo docker run -p 3000:3000 -d fasbit1/admin:1.0.0
+
+sudo docker tag 1026520c7890 fasbit1/admin:1.0.0
+ 
+sudo docker push fasbit1/admin:1.0.0
