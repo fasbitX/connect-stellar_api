@@ -5,8 +5,6 @@ services:
     image: fasbit1/admin:1.0.0
     ports:
       - "3000:3000"
-    networks:
-      - backend
   stellar_api:
     image: fasbit1/stellar_api:1.0.0
     ports:
@@ -17,8 +15,6 @@ services:
       - mongo
     volumes:
       - ${PWD}/.env:/usr/src/app/.env  
-    networks:
-      - backend
   backend_api:
     image: fasbit1/backend_api:1.0.0
     ports:
@@ -29,16 +25,9 @@ services:
       - mongo
     volumes:
       - ${PWD}/.env:/usr/src/app/.env
-    networks:
-      - backend
   mongo:
     image: mongo:latest
     ports:
       - "27017:27017"
     volumes:
       - ./data:/data/db
-    networks:
-      - backend
-networks:
-  backend:
-    driver: "bridge"
