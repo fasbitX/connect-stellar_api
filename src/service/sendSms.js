@@ -1,17 +1,22 @@
-const accountSid = 'AC506bfda4ac89236d294d5508e2169bb4';
-const authToken = 'b85a447ed4ec8884a5282e92e7be355e';
+require('dotenv').config();
+const accountSid = process.env.TW_ACCOUNTSID;
+const authToken = process.env.TW_AUTHTOKEN;
 const client = require('twilio')(accountSid, authToken);
 
 export const sendSms = async (mobileNumber) => {
   console.log('called');
   const otp = Math.floor(1000 + Math.random() * 9000);
-  await client.messages
-    .create({
-      body: otp,
-      from: '+15673200620',
-      to: '+919600975087'
-    })
+
+  await client.messages.create({
+    body: otp,
+    from: process.env.TW_FROM_NO,
+    to: mobileNumber
+  })
     .then(message => console.log('message', message.sid))
+    .catch(err => {
+      console.log(err.message);
+      //return err.message;
+    })
     .done();
-  return otp;
+    return otp;
 }

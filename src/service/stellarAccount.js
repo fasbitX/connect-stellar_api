@@ -3,12 +3,16 @@ import { AES, enc } from 'crypto-js';
 import { getAdmin } from '../routes/admin';
 
 const ENVCryptoSecret = 'Stellar-is-awesome';
-const stellarServer = new StellarSdk.Server('https://horizon-testnet.stellar.org');
-// const stellarAsset = new StellarSdk.Asset(
-//     StellarSdk.Asset.native().code,
-//     'GCD6WBCRZ7HUSMCWPSCHKLCVKWC3VD5PH43ARYUAUSET6IEO5ERTXYEI'
-// );
-StellarSdk.Network.useTestNetwork();
+
+if (process.env.NETWORK == 'TESTNET') {
+    console.log("TESTNET");
+    var stellarServer = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+    StellarSdk.Network.useTestNetwork();
+} else {
+    console.log("Main net");
+    var stellarServer = new StellarSdk.Server('https://horizon.stellar.org');
+    StellarSdk.Network.usePublicNetwork()
+}
 
 
 export const createAccount = async () => {
@@ -41,10 +45,10 @@ export const createAccountInLedger = async (newAccount) => {
             //console.log("Admin Seed ", admin.stellarSeed);
 
             //const provisionerKeyPair = StellarSdk.Keypair.fromSecret(AES.decrypt(admin.stellarSeed, ENVCryptoSecret).toString(enc.Utf8));
-            //GAYQ365SB2TCHRWV5JOC5JYNCEHGOBIEK3TAJ467GYORWZHBD52SUPN6
             const provisionerKeyPair = StellarSdk.Keypair.fromSecret(process.env.FUND_PRIVATE);
+            //console.log(process.env.FUND_PRIVATE)
             const provisioner = await stellarServer.loadAccount(provisionerKeyPair.publicKey());
-
+ 
             console.log('creating account in ledger', newAccount)
 
             const transaction = new StellarSdk.TransactionBuilder(provisioner)
@@ -61,7 +65,8 @@ export const createAccountInLedger = async (newAccount) => {
             console.log('Account created: ', result)
             resolve(result);
         } catch (e) {
-            console.log('Stellar account not created.', e)
+            console.log('Stellar account not created.');
+            //console.log(e);
         }
     })
 }
