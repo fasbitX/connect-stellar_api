@@ -14,4 +14,4 @@
 5- Run command 
   * docker-compose up -d
   
-6- After one minute, open this link in the browser to create admin account http://165.227.77.160:4000/admin/address (You have to change the ip to the server ip)
+6- After one minute, open this link in the browser to create admin account http://165.227.77.160:4000/admin/address (You have to change the ip to the server ip) # Open this link ONLY one time
