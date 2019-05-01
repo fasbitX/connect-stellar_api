@@ -38,7 +38,7 @@ export const createAccount = async () => {
 
 export const createAccountInLedger = async (newAccount) => {
     return new Promise(async (resolve, reject) => {
-        try {
+       
             //const admin = await getAdmin();
             console.log("New account");
             console.log(newAccount);
@@ -46,9 +46,7 @@ export const createAccountInLedger = async (newAccount) => {
 
             //const provisionerKeyPair = StellarSdk.Keypair.fromSecret(AES.decrypt(admin.stellarSeed, ENVCryptoSecret).toString(enc.Utf8));
             const provisionerKeyPair = StellarSdk.Keypair.fromSecret(process.env.FUND_PRIVATE);
-            //console.log(process.env.FUND_PRIVATE)
             const provisioner = await stellarServer.loadAccount(provisionerKeyPair.publicKey());
- 
             console.log('creating account in ledger', newAccount)
 
             const transaction = new StellarSdk.TransactionBuilder(provisioner)
@@ -64,10 +62,7 @@ export const createAccountInLedger = async (newAccount) => {
             const result = await stellarServer.submitTransaction(transaction);
             console.log('Account created: ', result)
             resolve(result);
-        } catch (e) {
-            console.log('Stellar account not created.');
-            //console.log(e);
-        }
+        
     })
 }
 

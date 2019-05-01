@@ -12,58 +12,98 @@ import async from 'async';
 import logger from '../service/logger';
 
 export const saveUser = (req, res) => {
-    console.log("Enter save user func, user mobile : ", req.body.mobile_number);
-    User.findOne({ mobile_number: req.body.mobile_number, code: req.body.code }, (error, existingUser) => {
+    //console.log("Enter save user func, user mobile : ", req.body.mobile_number);
+    if (req.body.mobile_number == null || new String(req.body.mobile_number).length <= 1) {
+        res.status(500).send({ 'message': 'OOPS!! missing mobile number' });
+        return;
+    }
+    if (req.body.code == null || new String(req.body.code).length <= 1) {
+        res.status(500).send({ 'message': 'OOPS!! missing code' });
+        return;
+    }
+    if (req.body.password == null || new String(req.body.password).length <= 1) {
+        res.status(500).send({ 'message': 'OOPS!! missing password' });
+        return;
+    }
+    try {
+        User.findOne({ mobile_number: req.body.mobile_number, code: req.body.code }, (error, existingUser) => {
 
-        if (error) {
-            console.error(error);
-            logger.error(error);
-            res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
-        }
-        if (existingUser !== null) {
-            loginUser(req, res);
-        } else {
-            createUser(req, res);
-        }
-    })
+            if (error) {
+                console.error(error);
+                logger.error(error);
+                res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+                return
+            }
+            if (existingUser !== null) {
+                loginUser(req, res);
+            } else {
+                createUser(req, res);
+            }
+        })
+        
+    }
+    catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const createUser = (req, res) => {
     console.log("Create User func");
-    console.log(req.body);
     const user = new User(req.body);
-    user.save(async (error, response) => {
-        if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
-        else {
-            const result = await createAccount();
-            const otp = await sendSms(req.body.mobile_number);
-            console.log('otp', otp);
-            updateUser(response._id, Object.assign({}, result, { 'otp': otp }), res);
-        }
-    })
+    try {
+        user.save(async (error, response) => {
+            if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+            else {
+                try {
+                    const result = await createAccount();
+                    const otp = await sendSms(req.body.mobile_number);
+                    console.log('otp', otp);
+                    updateUser(response._id, Object.assign({}, result, { 'otp': otp }), res);
+                } catch (error) {
+                    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+                    return;
+                }
+            }
+        })
+    } catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const createAddress = async (req, res) => {
     //
-    const result = await createAccount();
-    console.log(result);
-    //await updateUser(req.body._id, Object.assign({}, result), res);
-    res.send({ 'status': true, 'data': result });
+        try {
+            const result = await createAccount();
+            console.log(result);
+            //await updateUser(req.body._id, Object.assign({}, result), res);
+            res.send({ 'status': true, 'data': result });
+        } catch (error) {
+            res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+            return;
+        }
+    
 }
 
 export const updateUser = (id, body, res) => {
-
-    User.findOneAndUpdate(
-        { _id: id },
-        { $set: body },
-        { new: true, upsert: true },
-        (error, response) => {
-            if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
-            else {
-                res.status(200).send(response);
+    try {
+        User.findOneAndUpdate(
+            { _id: id },
+            { $set: body },
+            { new: true, upsert: true },
+            (error, response) => {
+                if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+                else {
+                    res.status(200).send(response);
+                }
             }
-        }
-    )
+        )
+    } 
+    catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const editProfile = (req, res) => {
@@ -71,42 +111,64 @@ export const editProfile = (req, res) => {
 }
 
 export const loginUser = (req, res) => {
-
-    User.findOne(
-        { mobile_number: req.body.mobile_number },
-        (error, user) => {
-            if (error) res.status(500).send({ 'message': error })
-            else {
-                user.comparePassword(req.body.password, (error, isMatch) => {
-                    if (error) res.status(500).send({ 'message': error })
-                    else {
-                        isMatch ? res.status(200).send({ user, message: 'Existing user' }) : res.status(500).send({ 'message': 'Incorrect password' });
-                    }
-                });
+    try {
+        User.findOne(
+            { mobile_number: req.body.mobile_number },
+            (error, user) => {
+                if (error) res.status(500).send({ 'message': error })
+                else {
+                    user.comparePassword(req.body.password, (error, isMatch) => {
+                        if (error) res.status(500).send({ 'message': error })
+                        else {
+                            isMatch ? res.status(200).send({ user, message: 'Existing user' }) : res.status(500).send({ 'message': 'Incorrect password' });
+                        }
+                    });
+                }
             }
-        }
-    )
+        )
+    }
+    catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const uploadImage = (req, res) => {
-    cloudinary.v2.uploader.upload(`data:image/jpg;base64,${req.body.image}`, (error, result) => {
-        console.log('err', error, result);
-        res.send(result);
-    });
+    if (req.body.image == null || new String(req.body.image).length <= 1) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
+    try{
+        cloudinary.v2.uploader.upload(`data:image/jpg;base64,${req.body.image}`, (error, result) => {
+            console.log('err', error, result);
+            res.send(result);
+        });
+    }
+    catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    } 
 }
 
 export const searchAutocomplete = (req, res) => {
     const regex = new RegExp(`^${req.query.mobile_number}`);
-    User.find({ mobile_number: regex }, (error, response) => {
-        if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
-        else {
-            res.status(200).send(response);
-        }
-    })
+    try {
+        User.find({ mobile_number: regex }, (error, response) => {
+            if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+            else {
+                res.status(200).send(response);
+            }
+        })
+    }
+    catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const getUser = async (req, res) => {
-    User.findOne({ _id: req.params.id })
+    try {
+        User.findOne({ _id: req.params.id })
         .populate('proofs')
         .exec((error, response) => {
             if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
@@ -114,42 +176,69 @@ export const getUser = async (req, res) => {
                 res.status(200).send(response);
             }
         })
+    } catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
+    
 }
 
 export const getUserDetails = async (req, res) => {
-    User.findOne({ mobile_number: req.query.mobile_number })
+    try{
+        User.findOne({ mobile_number: req.query.mobile_number })
         .exec((error, response) => {
             if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
             else {
                 res.status(200).send(response);
             }
         })
+    }
+    catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
-export const getUserProfile = (id) => {
-    return User.findOne({ _id: id }, (error, response) => {
-        if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
-        else {
-            return (response);
-        }
-    })
+export const getUserProfile = (id,res) => {
+    try {
+        return User.findOne({ _id: id }, (error, response) => {
+            if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+            else {
+                if(response) {
+                    console.log("response")
+                    return (response);
+                } else {
+                    console.log("no response")
+                    res.status(500).send({ 'message': 'OOPS!!' });
+                }
+            }
+        })
+    } catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const getCountryCode = (req, res) => {
     const country = [];
-    const url = (req.query.name == undefined) ? 'https://restcountries.eu/rest/v2/all' : `https://restcountries.eu/rest/v2/name/${req.query.name}`;
-
-    request(url, (error, result) => {
-        if (error) res.status(500).send({ 'message': error })
-        else {
-            JSON.parse(result.body).map((item) => country.push(lodash.pick(item, ['name', 'callingCodes', 'flag'])));
-            res.status(200).send(country);
-        }
-    })
+    const url = (req.query.name == undefined || req.query.name == null || req.query.name == '') ? 'https://restcountries.eu/rest/v2/all' : `https://restcountries.eu/rest/v2/name/${req.query.name}`;
+    try{
+        request(url, (error, result) => {
+            if (error) res.status(500).send({ 'message': error })
+            else {
+                JSON.parse(result.body).map((item) => country.push(lodash.pick(item, ['name', 'callingCodes', 'flag'])));
+                res.status(200).send(country);
+            }
+        })
+    } catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const getAllProfile = (req, res) => {
-    User.find()
+    try {
+        User.find()
         .populate('proofs')
         .exec((error, response) => {
             if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
@@ -157,33 +246,62 @@ export const getAllProfile = (req, res) => {
                 res.status(200).send(response);
             }
         })
+    }
+    catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const getUserCount = (req, res) => {
-    User.countDocuments()
+    try {
+        User.countDocuments()
         .exec((error, count) => {
             if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
             else {
                 res.status(200).send({ count: count });
             }
         })
+    } catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const getStellarAccount = async (req, res) => {
-    const user = await getUserProfile(req.params.id);
-
-    const result = await getAccount(user.stellarAddress);
-    res.status(200).send(result.balances);
+    try {
+        const user = await getUserProfile(req.params.id);
+        const result = await getAccount(user.stellarAddress);
+   
+        res.status(200).send(result.balances);
+    } catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
 }
 
 export const uploadKyc = async (req, res) => {
+    if (req.body.addressProof == null || new String(req.body.addressProof).length <= 1) {
+        res.status(500).send({ 'message': 'OOPS!! missing address' });
+        return;
+    }
+    if (req.body.idProof == null || new String(req.body.idProof).length <= 1) {
+        res.status(500).send({ 'message': 'OOPS!! missing id' });
+        return;
+    }
     const proof = new Proof(req.body);
-    proof.save(async (error, response) => {
-        if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
-        else {
-            updateUser(req.params.id, { 'proofs': response._id }, res);
-        }
-    })
+    try {
+        proof.save(async (error, response) => {
+            if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+            else {
+                updateUser(req.params.id, { 'proofs': response._id }, res);
+            }
+        })
+    } catch (error) {
+        res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+        return;
+    }
+    
 }
 
 export const sentStellarTransaction = async (req, res) => {

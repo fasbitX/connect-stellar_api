@@ -24,26 +24,64 @@ StellarSdk.Network.useTestNetwork();
 let marketRate;
 
 export const fiatBalance = async (req, res) => {
-  const admin = await getAdmin();
-  const stripe = require("stripe")(admin.stripeKey);
-  stripe.balance.retrieve(function (error, balance) {
-    if (error) res.status(500).send('OOPS!! Something went wrong');
-    res.status(200).send(balance)
-  });
+  try {
+    const admin = await getAdmin();
+  } catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  }
+  try {
+    const stripe = require("stripe")(admin.stripeKey);
+    stripe.balance.retrieve(function (error, balance) {
+      if (error) res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+      res.status(200).send(balance)
+    });
+  } catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  } 
 }
 
 export const stellarBalance = async (req, res) => {
-  const response = await getAdmin();
-
-  const result = await getAccount(response.stellarAddress);
-  res.status(200).send(result.balances);
+  try{
+    const response = await getAdmin();
+  }
+  catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  }
+  try{
+    const result = await getAccount(response.stellarAddress);
+    res.status(200).send(result.balances);
+  }
+  catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  }
 }
 
 export const nativeAssetTransaction = async (req, res) => {
   let sender, receiver, admin;
-
+  if( req.body.sender == null || new String(req.body.sender).length <= 1){
+    res.status(500).send({ 'message': 'OOPS!! sender is required' });
+    return;
+  }
+  if( req.body.receiver == null || new String(req.body.receiver).length <= 1){
+    res.status(500).send({ 'message': 'OOPS!! receiver is required' });
+    return;
+  }
+  if( req.body.amount == null || new String(req.body.amount).length <= 0){
+    res.status(500).send({ 'message': 'OOPS!! amount is required' });
+    return;
+  }
+  if(admin == null){
+    res.status(500).send({ 'message': 'OOPS!! no admin' });
+    return;
+  }
+  
+  
   try {
-    sender = await getUserProfile(req.body.sender);
+    sender = await getUserProfile(req.body.sender,res);
   } catch (error) {
     logger.error(error);
     res.status(500).send({ 'message': 'OOPS!! Something went wrong', 'error': error });
@@ -51,7 +89,7 @@ export const nativeAssetTransaction = async (req, res) => {
   }
 
   try {
-    receiver = await getUserProfile(req.body.receiver);
+    receiver = await getUserProfile(req.body.receiver,res);
   } catch (error) {
     logger.error(error);
     res.status(500).send({ 'message': 'OOPS!! Something went wrong', 'error': error });
@@ -181,15 +219,27 @@ export const withdrawTransaction = async (req, res) => {
 }
 
 export const depositTransaction = async (req, res) => {
-  const admin = await getAdmin();
-  Transaction.find({ $and: [{ currency: 'usd', receiver: admin._id }] })
-    .sort({ createdTs: -1 })
-    .exec((error, response) => {
-      if (error) res.status(500).send('OOPS!! Something went wrong');
-      else {
-        res.status(200).send(response);
-      }
-    });
+  try {
+    const admin = await getAdmin();
+  }
+  catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+ }
+ try{
+    Transaction.find({ $and: [{ currency: 'usd', receiver: admin._id }] })
+      .sort({ createdTs: -1 })
+      .exec((error, response) => {
+        if (error) res.status(500).send('OOPS!! Something went wrong');
+        else {
+          res.status(200).send(response);
+        }
+      });
+  }
+  catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  }
 }
 
 export const getReceivedAmount = (transactionId) => {
@@ -202,8 +252,15 @@ export const getReceivedAmount = (transactionId) => {
 }
 
 export const depositFeeTransaction = async (req, res) => {
-  const admin = await getAdmin();
-  Transaction.find({ $and: [{ currency: 'usd', receiver: admin._id }] })
+  try {
+    const admin = await getAdmin();
+  }
+  catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  } 
+  try {
+    Transaction.find({ $and: [{ currency: 'usd', receiver: admin._id }] })
     .sort({ createdTs: -1 })
     .lean()
     .exec(async (error, response) => {
@@ -219,6 +276,11 @@ export const depositFeeTransaction = async (req, res) => {
         });
       }
     });
+  }
+  catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  } 
 }
 
 export const withdrawFeeTransaction = async (req, res) => {
@@ -242,8 +304,14 @@ export const withdrawFeeTransaction = async (req, res) => {
 }
 
 export const userTransaction = async (req, res) => {
-  const admin = await getAdmin();
-  Transaction.find({ $and: [{ currency: 'xlm', receiver: { $ne: admin._id }, sender: { $ne: admin._id } }] })
+  try {
+    const admin = await getAdmin();
+  } catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  }
+  try {
+    Transaction.find({ $and: [{ currency: 'xlm', receiver: { $ne: admin._id }, sender: { $ne: admin._id } }] })
     .sort({ createdTs: -1 })
     .populate({ path: 'receiver', select: ['stellarAddress', '_id'] })
     .exec((error, response) => {
@@ -252,6 +320,10 @@ export const userTransaction = async (req, res) => {
         res.status(200).send(response);
       }
     });
+  }catch (error) {
+    res.status(500).send({ 'message': 'OOPS!! Something went wrong' });
+    return;
+  }
 }
 
 const checkStellarAmount = async (admin, req, res, next) => {
@@ -265,6 +337,7 @@ export const stripeTransaction = async (req, res) => {
   console.log(req.body);
   await getCurrentStellarRate();
   const admin = await getAdmin();
+  console.log("admin",admin)
   if (req.body.saveCard === true || req.body.saveCard == 1) {
     const card = await saveCardDetails(req.body.card);
     console.log('inside if');
@@ -377,65 +450,87 @@ const fileUpload = async (req, res) => {
   const url = req.body.verificationFile;
   const extensionArray = url.split('.');
   const extension = extensionArray[extensionArray.length - 1];
-  await downloadFile(url, extension, req);
-  const admin = await getAdmin();
+  try {
+    await downloadFile(url, extension, req);
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
+  try {
+    const admin = await getAdmin();
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
   const stripe = require("stripe")(admin.stripeKey);
-
-  stripe.fileUploads.create(
-    {
-      purpose: 'identity_document',
-      file: {
-        data: fs.readFileSync(`images/${req.params.id}.${extension}`),
-        name: 'licence.jpg',
-        type: 'application/octet-stream'
-      }
-    }, (error, file) => {
-      if (error) res.status(500).send('OOPS!! Something went wrong');
-      createStripeAccount(file, req, res);
-    })
+  try {
+    stripe.fileUploads.create(
+      {
+        purpose: 'identity_document',
+        file: {
+          data: fs.readFileSync(`images/${req.params.id}.${extension}`),
+          name: 'licence.jpg',
+          type: 'application/octet-stream'
+        }
+      }, (error, file) => {
+        if (error) res.status(500).send('OOPS!! Something went wrong');
+        createStripeAccount(file, req, res);
+      })
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
 }
 
 
 const createStripeAccount = async (file, req, res) => {
+  try {
+    const admin = await getAdmin();
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
+  try {
+    const stripe = require("stripe")(admin.stripeKey);
 
-  const admin = await getAdmin();
-  const stripe = require("stripe")(admin.stripeKey);
-
-  stripe.accounts.create({
-    country: "US",
-    type: "custom",
-    legal_entity: {
-      first_name: req.body.firstName,
-      last_name: req.body.lastName,
-      ssn_last_4: req.body.ssn,
-      dob: {
-        day: req.body.day,
-        month: req.body.month,
-        year: req.body.year
-      },
-      address: {
-        city: req.body.city,
-        line1: req.body.line1,
-        line2: req.body.line2,
-        postal_code: req.body.postalCode,
-        state: req.body.state
-      },
-      verification: {
-        document: file.id
-      },
-      type: 'individual',
-      phone_number: req.body.phoneNumber
-    }
-  }, (error, account) => {
-    if (error || account === null) res.status(500).send('OOPS!! Something went wrong');
-    createBankToken(account.id, req, res);
-  });
+    stripe.accounts.create({
+      country: "US",
+      type: "custom",
+      legal_entity: {
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        ssn_last_4: req.body.ssn,
+        dob: {
+          day: req.body.day,
+          month: req.body.month,
+          year: req.body.year
+        },
+        address: {
+          city: req.body.city,
+          line1: req.body.line1,
+          line2: req.body.line2,
+          postal_code: req.body.postalCode,
+          state: req.body.state
+        },
+        verification: {
+          document: file.id
+        },
+        type: 'individual',
+        phone_number: req.body.phoneNumber
+      }
+    }, (error, account) => {
+      if (error || account === null) res.status(500).send('OOPS!! Something went wrong');
+      createBankToken(account.id, req, res);
+    });
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
 }
 
 const createBankToken = async (accountId, req, res) => {
-
-  const admin = await getAdmin();
-  const stripe = require("stripe")(admin.stripeKey);
+  try {
+    const admin = await getAdmin();
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
+  try {
+    const stripe = require("stripe")(admin.stripeKey);
 
   stripe.tokens.create({
     bank_account: {
@@ -450,46 +545,68 @@ const createBankToken = async (accountId, req, res) => {
     if (error || token === null) res.status(500).send('OOPS!! Something went wrong');
     createBankAccount(accountId, token.id, req, res)
   });
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
 }
 
 const createBankAccount = async (accountId, tokenId, req, res) => {
 
-  const admin = await getAdmin();
-  const stripe = require("stripe")(admin.stripeKey);
+  try {
+    const admin = await getAdmin();
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
+  try {
+    const stripe = require("stripe")(admin.stripeKey);
 
-  stripe.accounts.createExternalAccount(
-    accountId,
-    { external_account: tokenId },
-    (error, bank_account) => {
-      if (error) res.status(500).send('OOPS!! Something went wrong');
-      createTransfers(accountId, req, res);
-    }
-  );
+    stripe.accounts.createExternalAccount(
+      accountId,
+      { external_account: tokenId },
+      (error, bank_account) => {
+        if (error) res.status(500).send('OOPS!! Something went wrong');
+        createTransfers(accountId, req, res);
+      }
+    );
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
+ 
 }
 
 const createTransfers = async (accountId, req, res) => {
-
-  const admin = await getAdmin();
+  try {
+    const admin = await getAdmin();
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
   const stripe = require("stripe")(admin.stripeKey);
-
-  const xlmTransaction = await createStellarTransfer(req, res);
-
-  stripe.transfers.create({
-    amount: Math.round((Number(req.body.usd) - Number(req.body.walletFee)) * 100),
-    currency: "usd",
-    destination: accountId
-  }, async (error, transfer) => {
-
-    if (error) res.status(500).send('OOPS!! Something went wrong');
-    if (req.body.saveDetails === true || req.body.saveDetails == 1) {
-      await saveWithdrawDetails(lodash.pick(req.body, ['ssn', 'firstName', 'lastName', 'day', 'month', 'year', 'city', 'line1', 'line2', 'state', 'postalCode', 'phoneNumber',
-        'verificationFile', 'accountNumber', 'accountHolder', 'routingNumber', 'user']));
-    }
-    const dbUpdate = Object.assign({}, { 'sender': admin._id, 'receiver': req.params.id, 'amount': req.body.usd, 'currency': 'usd', 'walletFee': req.body.walletFee, 'transactionID': xlmTransaction._id });
-    const usdUpdate = await saveTransaction(dbUpdate);
-
-    res.status(200).send(usdUpdate);
-  });
+  try {
+    const xlmTransaction = await createStellarTransfer(req, res);
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
+  
+  try {
+    stripe.transfers.create({
+      amount: Math.round((Number(req.body.usd) - Number(req.body.walletFee)) * 100),
+      currency: "usd",
+      destination: accountId
+    }, async (error, transfer) => {
+  
+      if (error) res.status(500).send('OOPS!! Something went wrong');
+      if (req.body.saveDetails === true || req.body.saveDetails == 1) {
+        await saveWithdrawDetails(lodash.pick(req.body, ['ssn', 'firstName', 'lastName', 'day', 'month', 'year', 'city', 'line1', 'line2', 'state', 'postalCode', 'phoneNumber',
+          'verificationFile', 'accountNumber', 'accountHolder', 'routingNumber', 'user']));
+      }
+      const dbUpdate = Object.assign({}, { 'sender': admin._id, 'receiver': req.params.id, 'amount': req.body.usd, 'currency': 'usd', 'walletFee': req.body.walletFee, 'transactionID': xlmTransaction._id });
+      const usdUpdate = await saveTransaction(dbUpdate);
+  
+      res.status(200).send(usdUpdate);
+    });
+  } catch (error) {
+    res.status(500).send('OOPS!! Something went wrong');
+  }
 }
 
 const createStellarTransfer = async (req, res) => {
