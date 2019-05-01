@@ -3,7 +3,7 @@ docker build -t fasbit1/stellar_api .
 
 sudo docker run -p 4000:4000 -d fasbit1/stellar_api:1.0.0
  
-sudo docker tag e4a3031f05fb fasbit1/stellar_api:1.0.0
+sudo docker tag 9974e5d6e52a fasbit1/stellar_api:1.0.0
  
 sudo docker push fasbit1/stellar_api:1.0.0
 #################Backend API######################

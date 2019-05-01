@@ -1,3 +1,10 @@
+/*
+*
+* Change Mongo Connection URL
+* Change don't push package.json file
+*
+*
+*/
 import express from 'express';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
@@ -7,14 +14,17 @@ import { Admin } from './models/AdminSchema';
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
 require('dotenv').config();
 
+
 const app = express();
 
-//db connection
-const url = 'mongodb://mongo:27017/WhatsappClone';
-//const url = 'mongodb://localhost:27017/WhatsappClone';
 
-console.log("Mongo URL: " + url)
-mongoose.connect(url, { useNewUrlParser: true }); 
+//db connection
+//const url = 'mongodb://mongo:27017/WhatsappClone';
+const url = 'mongodb://localhost:27017/WhatsappClone';
+
+console.log("Mongo URL: " + url);
+
+mongoose.connect(url, { useNewUrlParser: true });
 console.log("*****************************Mongo Connection: *************************** ");
 console.log(mongoose.connection.readyState);
 console.log("*****************************Mongo Connection: *************************** ");
